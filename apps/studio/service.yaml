@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: blogsphere-studio
+spec:
+  selector: { app: blogsphere-studio }
+  ports:
+  - port: 80
+    targetPort: 80

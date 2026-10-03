@@ -1,0 +1,33 @@
+# The image: line is rewritten by CI on every push to the app's main branch.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blogsphere-backend
+  labels: { app: blogsphere-backend }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: blogsphere-backend }
+  template:
+    metadata:
+      labels: { app: blogsphere-backend }
+    spec:
+      containers:
+      - name: web
+        image: ghcr.io/hiten-007/blogsphere-backend:latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - secretRef: { name: blogsphere-backend-env }   # created by hand, never committed (see README)
+        startupProbe:
+          httpGet: { path: /api/v1/categories, port: 8080 }
+          failureThreshold: 30
+          periodSeconds: 5
+        readinessProbe:
+          httpGet: { path: /api/v1/categories, port: 8080 }
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet: { path: /api/v1/categories, port: 8080 }
+          initialDelaySeconds: 30
+          periodSeconds: 10

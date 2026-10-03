@@ -1,0 +1,17 @@
+# CHANGE the hosts. Backend: api.*, public site: root, studio: studio.*
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blogsphere
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: api.blogsphere.example.com
+    http:
+      paths: [{ path: /, pathType: Prefix, backend: { service: { name: blogsphere-backend, port: { number: 80 } } } }]
+  - host: blogsphere.example.com
+    http:
+      paths: [{ path: /, pathType: Prefix, backend: { service: { name: blogsphere-public, port: { number: 80 } } } }]
+  - host: studio.blogsphere.example.com
+    http:
+      paths: [{ path: /, pathType: Prefix, backend: { service: { name: blogsphere-studio, port: { number: 80 } } } }]

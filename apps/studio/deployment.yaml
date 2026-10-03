@@ -1,0 +1,27 @@
+# The image: line is rewritten by CI on every push to the app's main branch.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blogsphere-studio
+  labels: { app: blogsphere-studio }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: blogsphere-studio }
+  template:
+    metadata:
+      labels: { app: blogsphere-studio }
+    spec:
+      containers:
+      - name: web
+        image: ghcr.io/hiten-007/blogsphere-studio:latest
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet: { path: /, port: 80 }
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet: { path: /, port: 80 }
+          initialDelaySeconds: 30
+          periodSeconds: 10
