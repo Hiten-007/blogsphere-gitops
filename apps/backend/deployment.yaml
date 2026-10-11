@@ -28,7 +28,7 @@ spec:
         seccompProfile: { type: RuntimeDefault }
       containers:
       - name: web
-        image: ghcr.io/hiten-007/blogsphere-backend:latest
+        image: ghcr.io/hiten-007/blogsphere-backend:a982706521f10feaec901be9e0bf2f242ca33fc1
         ports:
         - containerPort: 8080
         env:
