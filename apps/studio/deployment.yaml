@@ -6,17 +6,34 @@ metadata:
   labels: { app: blogsphere-studio }
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
   selector:
     matchLabels: { app: blogsphere-studio }
   template:
     metadata:
       labels: { app: blogsphere-studio }
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector: { matchLabels: { app: blogsphere-studio } }
+      securityContext:
+        seccompProfile: { type: RuntimeDefault }
       containers:
       - name: web
         image: ghcr.io/hiten-007/blogsphere-studio:latest
         ports:
         - containerPort: 80
+        resources:
+          requests: { cpu: 50m, memory: 32Mi }
+          limits: { memory: 128Mi }
+        securityContext:
+          allowPrivilegeEscalation: false
         readinessProbe:
           httpGet: { path: /, port: 80 }
           initialDelaySeconds: 5

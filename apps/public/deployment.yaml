@@ -6,17 +6,37 @@ metadata:
   labels: { app: blogsphere-public }
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
   selector:
     matchLabels: { app: blogsphere-public }
   template:
     metadata:
       labels: { app: blogsphere-public }
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector: { matchLabels: { app: blogsphere-public } }
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000   # "node" user in node:alpine
+        seccompProfile: { type: RuntimeDefault }
       containers:
       - name: web
         image: ghcr.io/hiten-007/blogsphere-public:latest
         ports:
         - containerPort: 3000
+        resources:
+          requests: { cpu: 100m, memory: 128Mi }
+          limits: { memory: 384Mi }
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: { drop: [ALL] }
         readinessProbe:
           httpGet: { path: /, port: 3000 }
           initialDelaySeconds: 5

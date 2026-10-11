@@ -6,28 +6,56 @@ metadata:
   labels: { app: blogsphere-backend }
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
   selector:
     matchLabels: { app: blogsphere-backend }
   template:
     metadata:
       labels: { app: blogsphere-backend }
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector: { matchLabels: { app: blogsphere-backend } }
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        seccompProfile: { type: RuntimeDefault }
       containers:
       - name: web
         image: ghcr.io/hiten-007/blogsphere-backend:latest
         ports:
         - containerPort: 8080
+        env:
+        - name: FILE_STORAGE_TYPE   # pods have no persistent disk; local storage would lose/split uploads
+          value: r2
         envFrom:
         - secretRef: { name: blogsphere-backend-env }   # created by hand, never committed (see README)
+        resources:
+          requests: { cpu: 250m, memory: 512Mi }
+          limits: { memory: 1Gi }
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: { drop: [ALL] }
+        volumeMounts:
+        - { name: tmp, mountPath: /tmp }
         startupProbe:
-          httpGet: { path: /api/v1/categories, port: 8080 }
+          httpGet: { path: /actuator/health/liveness, port: 8080 }
           failureThreshold: 30
           periodSeconds: 5
         readinessProbe:
-          httpGet: { path: /api/v1/categories, port: 8080 }
+          httpGet: { path: /actuator/health/readiness, port: 8080 }
           initialDelaySeconds: 5
           periodSeconds: 5
         livenessProbe:
-          httpGet: { path: /api/v1/categories, port: 8080 }
+          httpGet: { path: /actuator/health/liveness, port: 8080 }
           initialDelaySeconds: 30
           periodSeconds: 10
+      volumes:
+      - { name: tmp, emptyDir: {} }
